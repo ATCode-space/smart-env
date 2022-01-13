@@ -41,7 +41,7 @@ class ClassProperty(type):
     """Metaclass for enabling properties on class"""
 
     __immutable_fields__ = ('enable_automatic_type_cast',
-                          'disable_automatic_type_cast')
+                            'disable_automatic_type_cast')
     __mutable_fields__ = ('_auto_type_cast',)
 
     __own_fields__ = __immutable_fields__ + __mutable_fields__
@@ -107,6 +107,7 @@ class ClassProperty(type):
 
         if key in cls.__mutable_fields__:
             super(ClassProperty, cls).__setattr__(key, value)
+            return
 
         if value is None:  # means - unset variable
             delattr(cls, key)
@@ -145,10 +146,20 @@ class ClassProperty(type):
         """Returns list of environment variables + own fields"""
 
         return sorted(
-            itertools.chain(self.__own_fields__,
-                            os.environ.keys()
+            itertools.chain(
+                self.__own_fields__,
+                os.environ.keys()
             )
         )
+
+    def __enter__(self):
+        """Enables automatic type cast"""
+        self.__ctx_previous_type_cast = self._auto_type_cast
+        self._auto_type_cast = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._auto_type_cast = self.__ctx_previous_type_cast
+        del self.__ctx_previous_type_cast
 
 
 class ENV(with_metaclass(ClassProperty)):
