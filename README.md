@@ -55,10 +55,16 @@ This library contains tests written using *unittest* module, so just run in the 
 python -m unittest
 ```
 
-Also it's possible to run tests using Tox:
+It's possible to run tests using Tox as well:
 
 ```bash
 tox -e <env>
+```
+
+or even just
+
+```bash
+tox
 ```
 
 Tests coverage is one of the important goals of this project.

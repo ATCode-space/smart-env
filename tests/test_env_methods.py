@@ -24,13 +24,17 @@ THE SOFTWARE.
 
 import datetime
 import itertools
+import os
 from time import time
 import unittest
 
 from smart_env import ENV
 
 
-__all__ = ('EnvTestCase',)
+__all__ = (
+    'EnvTestCase',
+    'ENVRepresentationTestCase'
+)
 
 
 class EnvTestCase(unittest.TestCase):
@@ -136,14 +140,31 @@ class EnvTestCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             ENV._ENV__decode(object())
 
+    def test_012_env_as_context_manager(self):
+        """Check ENV's behaviour as a context manager"""
+
+        for method, assertFn in (
+            ('disable_automatic_type_cast', self.assertFalse),
+            ('enable_automatic_type_cast', self.assertTrue)
+        ):
+            getattr(ENV, method)()
+            assertFn(ENV.is_auto_type_cast())
+            with ENV:
+                self.assertTrue(ENV.is_auto_type_cast())
+            assertFn(ENV.is_auto_type_cast())
+
+    def tearDown(self):
+        ENV.disable_automatic_type_cast()
+
 
 class ENVRepresentationTestCase(unittest.TestCase):
     """Test cases for representations of ENV class"""
 
     def setUp(self):
         """Erase environment before running tests"""
+        ENV.disable_automatic_type_cast()
 
-        for var in ENV:
+        for var in list(os.environ):
             setattr(ENV, var, None)
 
     def test_001_test_str_method(self):
@@ -193,3 +214,6 @@ class ENVRepresentationTestCase(unittest.TestCase):
         )
 
         self.assertEqual(dir(ENV), dir_list)
+
+    def tearDown(self):
+        ENV.disable_automatic_type_cast()

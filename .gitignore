@@ -29,6 +29,7 @@
 *.db
 *.env*
 __pycache__
+.coverage.*
 .coverage
 htmlcov
 *egg-info
