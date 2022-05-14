@@ -110,3 +110,18 @@ class EnvWithTypeCastTestCase(unittest.TestCase):
         value = "['Hello', ['world']]"
         self.setup_value(value)
         self.assertEqual(getattr(ENV, self.KEY), ['Hello', ['world']])
+
+    def test_012_decode_non_text_value(self):
+        class FakeString:
+            def __str__(self):
+                return 'FakeString'
+
+        try:
+            type(ENV)._ClassProperty__decode(FakeString())
+        except TypeError as e:
+            cmp_representation = 'Value FakeString must be str, not {}'.format(FakeString)
+            self.assertEqual(str(e), cmp_representation)
+        except Exception as e:
+            self.fail('Caught unexpected exception: {}'.format(e))
+        else:
+            self.fail('No exception caught')

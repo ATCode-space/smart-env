@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import random
 import os
 import time
 from unittest import TestCase
@@ -62,3 +63,7 @@ class EnvGeneralTestCase(TestCase):
 
         param_name = self.generate_param_name()
         self.assertIsNone(getattr(ENV, param_name))
+
+    def test_003_delete_undefined_variable(self):
+        random_name = 'random_{}'.format(random.randint(1, 10000000))
+        delattr(ENV, random_name)

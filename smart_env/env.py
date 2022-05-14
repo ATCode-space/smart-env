@@ -31,6 +31,7 @@ from six import with_metaclass
 from .decoders import SUPPORTED_DECODERS
 from .exceptions import DecodeError
 from .exceptions import EncodeError
+from .exceptions import UnsupportedAction
 from .iterator import EnvIterator
 
 
@@ -181,3 +182,6 @@ class ENV(with_metaclass(ClassProperty)):
     def is_auto_type_cast(cls):
         """Shows if automatic type cast is enabled"""
         return cls._auto_type_cast
+
+    def __init__(self):
+        raise UnsupportedAction('Instantiating of ENV substance')

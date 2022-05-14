@@ -27,7 +27,7 @@ import abc
 from six import with_metaclass
 
 
-__all__ = ('DecodeError', 'EncodeError', 'EnvException')
+__all__ = ('DecodeError', 'EncodeError', 'EnvException', 'UnsupportedAction')
 
 
 class EnvException(with_metaclass(abc.ABCMeta, Exception)):
@@ -40,3 +40,16 @@ class DecodeError(EnvException):
 
 class EncodeError(EnvException):
     """Error while trying to encode value"""
+
+
+class UnsupportedAction(EnvException):
+    """An exception class for unsupported actions or operations"""
+
+    def __init__(self, *args):
+        if args:
+            self._action = args[0]
+
+    def __str__(self):
+        return ("Unsupported action: {}".format(self._action)
+                if hasattr(self, '_action')
+                else "This action is not supported")
