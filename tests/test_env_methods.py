@@ -29,6 +29,7 @@ from time import time
 import unittest
 
 from smart_env import ENV
+from smart_env.exceptions import UnsupportedAction
 
 
 __all__ = (
@@ -214,6 +215,9 @@ class ENVRepresentationTestCase(unittest.TestCase):
         )
 
         self.assertEqual(dir(ENV), dir_list)
+
+    def test_005_check_instantiation_of_class(self):
+        self.assertRaises(UnsupportedAction, ENV)
 
     def tearDown(self):
         ENV.disable_automatic_type_cast()
