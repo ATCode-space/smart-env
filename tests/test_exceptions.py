@@ -10,4 +10,7 @@ class ExceptionTestCase(unittest.TestCase):
         self.assertEqual(str(UnsupportedAction(action)), cmp_representation)
 
     def test_002_representation_of_unsupported_undefined_action(self):
-        self.assertEqual(str(UnsupportedAction()), 'This action is not supported')
+        self.assertEqual(
+            str(UnsupportedAction()),
+            'This action is not supported'
+        )

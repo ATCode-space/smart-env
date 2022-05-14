@@ -119,7 +119,9 @@ class EnvWithTypeCastTestCase(unittest.TestCase):
         try:
             type(ENV)._ClassProperty__decode(FakeString())
         except TypeError as e:
-            cmp_representation = 'Value FakeString must be str, not {}'.format(FakeString)
+            cmp_representation = 'Value FakeString must be str, not {}'.format(
+                "<type 'instance'>" if is_python2_running() else FakeString
+            )
             self.assertEqual(str(e), cmp_representation)
         except Exception as e:
             self.fail('Caught unexpected exception: {}'.format(e))
