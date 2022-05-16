@@ -37,13 +37,13 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'),
 
 setup(
     name='smart-env',
-    version='1.0.3',
+    version='1.0.4',
     description='Smart Environment Wrapper Library',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/atcode-space/smart-env',
-    author='Alex Sokolov',
-    author_email='volokos.alex@gmail.com',
+    author='Oleksandr Sokolov',
+    author_email='volokolek@gmail.com',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
