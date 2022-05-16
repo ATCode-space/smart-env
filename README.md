@@ -19,13 +19,24 @@ from smart_env import ENV
 
 print(ENV.HOME)  # Equals print(os.environ['HOME'])
 
-# assuming you set env variable MYVAR to "True"
+# Apply type cast wherever you need by using ENV as a context manager
 
+with ENV:
+   # assuming you set env variable MYVAR to "True" in shell
+   my_var = ENV.MY_VAR  # Equals boolean True
+# And here type cast is automatically disabled
+my_second_var = ENV.MY_VAR  # Equals 'True' as string
+
+# Enabling automatic type cast for all the further commands
 ENV.enable_automatic_type_cast()
 
+# assuming you set env variable MYVAR to "True" in shell
 my_var = ENV.MY_VAR  # Equals boolean True
 
 ENV.NEW_VAR = 100  # Sets a new environment variable
+
+# Disabling automatic type cast
+ENV.enable_automatic_type_cast()
 ```
 
 ## How to use
@@ -61,7 +72,7 @@ It's possible to run tests using Tox as well:
 tox -e <env>
 ```
 
-or even just
+or just
 
 ```bash
 tox
@@ -69,8 +80,8 @@ tox
 
 Tests coverage is one of the important goals of this project.
 For now coverage is next:
-- For Python 2.7: 98%
-- For Python 3.x: 97%
+- For Python 2.7: 99%
+- For Python 3.x: 99%
 
 Supported environments:
 
@@ -79,8 +90,9 @@ Supported environments:
 - py36
 - py37
 - py38
+- py39
 - coverage (using Python 3)
-- coverage (using Python 2.7)
+- coverage27 (using Python 2.7)
 - pep8 (style checking)
 
 ## Restrictions
