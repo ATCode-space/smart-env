@@ -1,6 +1,11 @@
 # Changes
 
-### 2022-01-13 - v.1.0.3
+### 2022-05-16 - v1.0.4
+
+* Added prevention for instantiating ENV class
+* Improved test coverage
+
+### 2022-01-13 - v1.0.3
 
 * ENV now is a context manager (enabling auto type cast within)
 * Fixed a bug of setting _auto_type_cast
@@ -10,7 +15,7 @@
 * Added test for ENV as context manager
 
 
-### 2020-02-15 - v.1.0.2
+### 2020-02-15 - v1.0.2
 
 * Added support for operator "in"
 * Added support for dir(ENV)
@@ -18,6 +23,6 @@
 * Added support for iterating ENV
 * Increased test coverage on Python 3 to 97%
 
-### 2020-02-29 - v.1.0.1
+### 2020-02-29 - v1.0.1
 
 * Bugfixes and some refactoring
