@@ -157,7 +157,7 @@ class CollectionDecoder(IDecoder):
         """
         try:
             return ast.literal_eval(value)
-        except ValueError:
+        except (ValueError, SyntaxError):
             raise DecodeError
 
     @classmethod
