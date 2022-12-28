@@ -22,8 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from collections import Iterable
-from collections import Iterator
+try:  # Python 3.5+
+    from collections.abc import Iterable
+    from collections.abc import Iterator
+except ImportError:  # Python 2.7
+    from collections import Iterable
+    from collections import Iterator
 
 
 __all__ = ('EnvIterator',)

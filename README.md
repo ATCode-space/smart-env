@@ -81,7 +81,7 @@ tox
 Tests coverage is one of the important goals of this project.
 For now coverage is next:
 - For Python 2.7: 99%
-- For Python 3.x: 99%
+- For Python 3.x: 97%
 
 Supported environments:
 
@@ -91,6 +91,7 @@ Supported environments:
 - py37
 - py38
 - py39
+- py310
 - coverage (using Python 3)
 - coverage27 (using Python 2.7)
 - pep8 (style checking)
@@ -105,7 +106,7 @@ However, you always can implement such support in your forks.
 
 ## Authors
 
-* **Alex Sokolov** - *Author* - [Albartash](https://github.com/AlBartash)
+* **Olek Sokolov** - *Author* - [Albartash](https://github.com/AlBartash)
 
 ## Contacts
 

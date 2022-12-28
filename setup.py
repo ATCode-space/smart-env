@@ -56,11 +56,16 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
 
     keywords='env environ smartenv',
     packages=find_packages(exclude=['tests']),
-    python_requires='>=2.7.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <3.10',
+    python_requires=', '.join([
+        '>=2.7.*',
+        '!=3.0.*', '!=3.1.*', '!=3.2.*', '!=3.3.*', '!=3.4.*',
+        '<3.11'
+    ]),
     install_requires=[
         "six>=1.14.0"
     ],
