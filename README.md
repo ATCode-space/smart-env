@@ -92,6 +92,7 @@ Supported environments:
 - py38
 - py39
 - py310
+- py311
 - coverage (using Python 3)
 - coverage27 (using Python 2.7)
 - pep8 (style checking)
