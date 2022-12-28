@@ -89,9 +89,12 @@ class ClassProperty(type):
 
     def __delattr__(cls, item):
         """Unset environment variable"""
+
         if item in cls.__own_fields__:
             raise AttributeError(
-                "Own attribute '{}' cannot be deleted".format(item))
+                "Own attribute '{}' cannot be deleted".format(item)
+            )
+
         # NOTE(albartash): If environment variable is not set,
         #                  it can be safely unset more times.
         #                  This behaviour is different from native
@@ -102,11 +105,18 @@ class ClassProperty(type):
             pass
 
     def __setattr__(cls, key, value):
+        """Sets a new or updates existing environment variable"""
+
         if key in cls.__immutable_fields__:
             raise AttributeError(
                 "Own attribute '{}' cannot be reinitialized".format(key))
 
         if key in cls.__mutable_fields__:
+            if value is None:
+                raise AttributeError(
+                    "Protected attribute '{}' cannot be unset".format(key)
+                )
+
             super(ClassProperty, cls).__setattr__(key, value)
             return
 

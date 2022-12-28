@@ -154,6 +154,14 @@ class EnvTestCase(unittest.TestCase):
                 self.assertTrue(ENV.is_auto_type_cast())
             assertFn(ENV.is_auto_type_cast())
 
+    def test_013_forbid_deletion_of_protected_member(self):
+        """Check capturing _is_auto_type_cast deletion try"""
+
+        with self.assertRaises(AttributeError):
+            del ENV._auto_type_cast
+        with self.assertRaises(AttributeError):
+            ENV._auto_type_cast = None
+
     def tearDown(self):
         ENV.disable_automatic_type_cast()
 
