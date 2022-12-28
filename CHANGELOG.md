@@ -4,6 +4,7 @@
 
 * Added prevention for instantiating ENV class
 * Improved test coverage
+* Added support for Python 3.9
 
 ### 2022-01-13 - v1.0.3
 
