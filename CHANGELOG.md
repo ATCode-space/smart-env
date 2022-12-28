@@ -1,5 +1,12 @@
 # Changes
 
+### 2022-12-28 - v1.0.5
+
+* Added support for Python 3.10 and 3.11
+* Fixed bug with initialization of _auto_type_cast field
+* Fixed SyntaxError bug when parsing strings while casting is on
+* Updated copyright and code ownership notes
+
 ### 2022-05-16 - v1.0.4
 
 * Added prevention for instantiating ENV class

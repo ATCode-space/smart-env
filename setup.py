@@ -37,7 +37,7 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'),
 
 setup(
     name='smart-env',
-    version='1.0.4',
+    version='1.0.5',
     description='Smart Environment Wrapper Library',
     long_description=long_description,
     long_description_content_type='text/markdown',
