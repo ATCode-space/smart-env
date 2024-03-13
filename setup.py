@@ -37,7 +37,7 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'),
 
 setup(
     name='smart-env',
-    version='1.0.5',
+    version='1.0.6',
     description='Smart Environment Wrapper Library',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -63,12 +63,12 @@ setup(
     keywords='env environ smartenv',
     packages=find_packages(exclude=['tests']),
     python_requires=', '.join([
-        '>=2.7.*',
+        '>=2.7.0',
         '!=3.0.*', '!=3.1.*', '!=3.2.*', '!=3.3.*', '!=3.4.*',
-        '<3.12'
+        '<3.13'
     ]),
     install_requires=[
-        "six>=1.14.0"
+        "six>=1.14.0",
     ],
 
     project_urls={
