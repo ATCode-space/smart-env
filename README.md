@@ -93,6 +93,7 @@ Supported environments:
 - py39
 - py310
 - py311
+- py312
 - coverage (using Python 3)
 - coverage27 (using Python 2.7)
 - pep8 (style checking)
@@ -107,11 +108,8 @@ However, you always can implement such support in your forks.
 
 ## Authors
 
-* **Olek Sokolov** - *Author* - [Albartash](https://github.com/AlBartash)
+* **Olek Sokolov** - [Albartash](https://github.com/AlBartash)
 
-## Contacts
-
-* Telegram channel with updates: [@bart_tools](http://t.me/bart_tools)
 
 ## License
 
