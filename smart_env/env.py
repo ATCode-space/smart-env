@@ -44,12 +44,14 @@ class ClassProperty(type):
 
     __immutable_fields__ = ('enable_automatic_type_cast',
                             'disable_automatic_type_cast',
-                            '_env_lock')
+                            '_env_lock',
+                            '_context_stack')
     __mutable_fields__ = ('_auto_type_cast',)
 
     __own_fields__ = __immutable_fields__ + __mutable_fields__
     
     _env_lock = threading.RLock()
+    _context_stack = threading.local()
 
     @staticmethod
     def __decode(value):
@@ -169,12 +171,17 @@ class ClassProperty(type):
 
     def __enter__(self):
         """Enables automatic type cast"""
-        self.__ctx_previous_type_cast = self._auto_type_cast
+        if not hasattr(self._context_stack, 'stack'):
+            self._context_stack.stack = []
+        
+        self._context_stack.stack.append(self._auto_type_cast)
         self._auto_type_cast = True
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._auto_type_cast = self.__ctx_previous_type_cast
-        del self.__ctx_previous_type_cast
+        if hasattr(self._context_stack, 'stack') and self._context_stack.stack:
+            self._auto_type_cast = self._context_stack.stack.pop()
+        return False
 
 
 class ENV(with_metaclass(ClassProperty)):

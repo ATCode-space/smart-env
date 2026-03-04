@@ -33,7 +33,7 @@ from smart_env.exceptions import DecodeError
 
 
 __all__ = ('CollectionDecoderSecurityTestCase', 'JSONDecoderSecurityTestCase',
-           'ThreadSafetyTestCase')
+           'ThreadSafetyTestCase', 'ContextManagerTestCase')
 
 
 class CollectionDecoderSecurityTestCase(unittest.TestCase):
@@ -362,3 +362,136 @@ class ThreadSafetyTestCase(unittest.TestCase):
 
         self.assertEqual(len(errors), 0)
         self.assertTrue(len(results) > 0)
+
+
+class ContextManagerTestCase(unittest.TestCase):
+    """Test cases for ENV context manager safety"""
+
+    def setUp(self):
+        ENV.disable_automatic_type_cast()
+        if 'TEST_VAR' in ENV:
+            del ENV.TEST_VAR
+
+    def tearDown(self):
+        ENV.disable_automatic_type_cast()
+        if 'TEST_VAR' in ENV:
+            del ENV.TEST_VAR
+
+    def test_basic_context_manager(self):
+        """Test basic context manager usage"""
+        self.assertFalse(ENV.is_auto_type_cast())
+        
+        with ENV:
+            self.assertTrue(ENV.is_auto_type_cast())
+        
+        self.assertFalse(ENV.is_auto_type_cast())
+
+    def test_nested_context_managers(self):
+        """Test that nested context managers work correctly"""
+        self.assertFalse(ENV.is_auto_type_cast())
+        
+        with ENV:
+            self.assertTrue(ENV.is_auto_type_cast())
+            
+            with ENV:
+                self.assertTrue(ENV.is_auto_type_cast())
+            
+            self.assertTrue(ENV.is_auto_type_cast())
+        
+        self.assertFalse(ENV.is_auto_type_cast())
+
+    def test_context_manager_with_enabled_type_cast(self):
+        """Test context manager when type cast is already enabled"""
+        ENV.enable_automatic_type_cast()
+        self.assertTrue(ENV.is_auto_type_cast())
+        
+        with ENV:
+            self.assertTrue(ENV.is_auto_type_cast())
+        
+        self.assertTrue(ENV.is_auto_type_cast())
+        ENV.disable_automatic_type_cast()
+
+    def test_context_manager_exception_handling(self):
+        """Test that exceptions don't corrupt context manager state"""
+        self.assertFalse(ENV.is_auto_type_cast())
+        
+        try:
+            with ENV:
+                self.assertTrue(ENV.is_auto_type_cast())
+                raise ValueError("Test exception")
+        except ValueError:
+            pass
+        
+        self.assertFalse(ENV.is_auto_type_cast())
+
+    def test_nested_context_with_exception(self):
+        """Test nested contexts with exception in inner context"""
+        self.assertFalse(ENV.is_auto_type_cast())
+        
+        with ENV:
+            self.assertTrue(ENV.is_auto_type_cast())
+            
+            try:
+                with ENV:
+                    self.assertTrue(ENV.is_auto_type_cast())
+                    raise RuntimeError("Inner exception")
+            except RuntimeError:
+                pass
+            
+            self.assertTrue(ENV.is_auto_type_cast())
+        
+        self.assertFalse(ENV.is_auto_type_cast())
+
+    def test_context_manager_thread_safety(self):
+        """Test that context managers work correctly across threads"""
+        results = []
+        errors = []
+
+        def thread_worker():
+            try:
+                initial_state = ENV.is_auto_type_cast()
+                
+                with ENV:
+                    inside_state = ENV.is_auto_type_cast()
+                    time.sleep(0.01)
+                
+                final_state = ENV.is_auto_type_cast()
+                results.append({
+                    'initial': initial_state,
+                    'inside': inside_state,
+                    'final': final_state
+                })
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=thread_worker) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(errors), 0)
+        self.assertEqual(len(results), 10)
+        
+        for result in results:
+            self.assertTrue(result['inside'])
+            self.assertEqual(result['initial'], result['final'])
+
+    def test_deeply_nested_contexts(self):
+        """Test many levels of nested contexts"""
+        self.assertFalse(ENV.is_auto_type_cast())
+        
+        depth = 10
+        for i in range(depth):
+            ENV.__enter__()
+            self.assertTrue(ENV.is_auto_type_cast())
+        
+        for i in range(depth):
+            ENV.__exit__(None, None, None)
+        
+        self.assertFalse(ENV.is_auto_type_cast())
+
+    def test_context_manager_returns_self(self):
+        """Test that __enter__ returns self for 'as' syntax"""
+        with ENV as env:
+            self.assertIs(env, ENV)
