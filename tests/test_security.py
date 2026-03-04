@@ -22,14 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import threading
+import time
 import unittest
 
+from smart_env import ENV
 from smart_env.decoders import CollectionDecoder
 from smart_env.decoders import JSONDecoder
 from smart_env.exceptions import DecodeError
 
 
-__all__ = ('CollectionDecoderSecurityTestCase', 'JSONDecoderSecurityTestCase')
+__all__ = ('CollectionDecoderSecurityTestCase', 'JSONDecoderSecurityTestCase',
+           'ThreadSafetyTestCase')
 
 
 class CollectionDecoderSecurityTestCase(unittest.TestCase):
@@ -219,3 +223,142 @@ class JSONDecoderSecurityTestCase(unittest.TestCase):
         self.assertEqual(result['count'], 2)
         self.assertEqual(len(result['users']), 2)
         self.assertEqual(result['users'][0]['name'], 'Alice')
+
+
+class ThreadSafetyTestCase(unittest.TestCase):
+    """Test cases for thread safety in ENV operations"""
+
+    def setUp(self):
+        if 'TEST_THREAD_VAR' in ENV:
+            del ENV.TEST_THREAD_VAR
+        if 'TEST_COUNTER' in ENV:
+            del ENV.TEST_COUNTER
+
+    def tearDown(self):
+        if 'TEST_THREAD_VAR' in ENV:
+            del ENV.TEST_THREAD_VAR
+        if 'TEST_COUNTER' in ENV:
+            del ENV.TEST_COUNTER
+
+    def test_concurrent_reads(self):
+        """Test that concurrent reads don't cause race conditions"""
+        ENV.TEST_THREAD_VAR = 'test_value'
+        results = []
+        errors = []
+
+        def reader():
+            try:
+                for _ in range(100):
+                    value = ENV.TEST_THREAD_VAR
+                    results.append(value)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=reader) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(errors), 0)
+        self.assertTrue(all(v == 'test_value' for v in results))
+
+    def test_concurrent_writes(self):
+        """Test that concurrent writes are thread-safe"""
+        errors = []
+
+        def writer(thread_id):
+            try:
+                for i in range(50):
+                    ENV.TEST_THREAD_VAR = 'thread_{}_value_{}'.format(thread_id, i)
+                    time.sleep(0.0001)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=writer, args=(i,)) for i in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(errors), 0)
+        self.assertIsNotNone(ENV.TEST_THREAD_VAR)
+
+    def test_concurrent_read_write(self):
+        """Test that concurrent reads and writes don't corrupt state"""
+        ENV.TEST_THREAD_VAR = 'initial'
+        errors = []
+        read_values = []
+
+        def reader():
+            try:
+                for _ in range(50):
+                    value = ENV.TEST_THREAD_VAR
+                    if value is not None:
+                        read_values.append(value)
+                    time.sleep(0.0001)
+            except Exception as e:
+                errors.append(e)
+
+        def writer():
+            try:
+                for i in range(50):
+                    ENV.TEST_THREAD_VAR = 'value_{}'.format(i)
+                    time.sleep(0.0001)
+            except Exception as e:
+                errors.append(e)
+
+        threads = []
+        threads.extend([threading.Thread(target=reader) for _ in range(3)])
+        threads.extend([threading.Thread(target=writer) for _ in range(2)])
+
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(errors), 0)
+        self.assertTrue(len(read_values) > 0)
+
+    def test_concurrent_delete_operations(self):
+        """Test that concurrent delete operations are safe"""
+        errors = []
+
+        def deleter():
+            try:
+                for i in range(50):
+                    ENV.TEST_THREAD_VAR = 'value_{}'.format(i)
+                    del ENV.TEST_THREAD_VAR
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=deleter) for _ in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(errors), 0)
+
+    def test_concurrent_contains_check(self):
+        """Test that concurrent 'in' checks are thread-safe"""
+        ENV.TEST_THREAD_VAR = 'value'
+        results = []
+        errors = []
+
+        def checker():
+            try:
+                for _ in range(100):
+                    result = 'TEST_THREAD_VAR' in ENV
+                    results.append(result)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=checker) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(errors), 0)
+        self.assertTrue(len(results) > 0)
