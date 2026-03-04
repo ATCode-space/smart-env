@@ -28,6 +28,9 @@ import json
 
 from six import with_metaclass
 
+from .constants import MAX_INPUT_SIZE
+from .constants import MAX_NESTING_DEPTH
+from .constants import MAX_TOTAL_ITEMS
 from .exceptions import DecodeError
 from .exceptions import EncodeError
 
@@ -59,6 +62,66 @@ class JSONDecoder(IDecoder):
     """JSON-based decoder"""
 
     @classmethod
+    def _validate_input_size(cls, value):
+        if len(value) > MAX_INPUT_SIZE:
+            raise DecodeError(
+                "Input too large: {} bytes (max: {})".format(
+                    len(value), MAX_INPUT_SIZE
+                )
+            )
+
+    @classmethod
+    def _validate_nesting_depth(cls, obj, current_depth=0):
+        if current_depth > MAX_NESTING_DEPTH:
+            raise DecodeError(
+                "JSON nesting too deep: exceeds maximum depth of {}".format(
+                    MAX_NESTING_DEPTH
+                )
+            )
+        
+        if isinstance(obj, dict):
+            if not obj:
+                return current_depth
+            return max(
+                cls._validate_nesting_depth(value, current_depth + 1)
+                for value in obj.values()
+            )
+        elif isinstance(obj, list):
+            if not obj:
+                return current_depth
+            return max(
+                cls._validate_nesting_depth(item, current_depth + 1)
+                for item in obj
+            )
+        else:
+            return current_depth
+
+    @classmethod
+    def _validate_result_size(cls, obj):
+        def count_items(obj, count=0):
+            if count > MAX_TOTAL_ITEMS:
+                raise DecodeError(
+                    "JSON result too large: exceeds {} items".format(
+                        MAX_TOTAL_ITEMS
+                    )
+                )
+            
+            if isinstance(obj, dict):
+                count += len(obj)
+                for key, value in obj.items():
+                    count = count_items(key, count)
+                    count = count_items(value, count)
+            elif isinstance(obj, list):
+                count += len(obj)
+                for item in obj:
+                    count = count_items(item, count)
+            else:
+                count += 1
+            return count
+        
+        count_items(obj)
+
+    @classmethod
     def decode(cls, value):
         """Try to decode value assuming it's a JSON-like string
 
@@ -74,9 +137,15 @@ class JSONDecoder(IDecoder):
         """
 
         try:
-            return json.loads(value)
+            cls._validate_input_size(value)
+            result = json.loads(value)
+            cls._validate_nesting_depth(result)
+            cls._validate_result_size(result)
+            return result
         except (TypeError, ValueError):
             raise DecodeError
+        except DecodeError:
+            raise
 
     @classmethod
     def encode(cls, value):
@@ -145,30 +214,21 @@ class BooleanDecoder(IDecoder):
 class CollectionDecoder(IDecoder):
     """Decoder for collection-like values"""
 
-    MAX_INPUT_SIZE = 1024 * 1024  # 1MB
-    MAX_NESTING_DEPTH = 20
-    MAX_TOTAL_ITEMS = 10000
-
     @classmethod
     def _validate_input_size(cls, value):
-        """Validate input size to prevent memory exhaustion attacks"""
-        if len(value) > cls.MAX_INPUT_SIZE:
+        if len(value) > MAX_INPUT_SIZE:
             raise DecodeError(
                 "Input too large: {} bytes (max: {})".format(
-                    len(value), cls.MAX_INPUT_SIZE
+                    len(value), MAX_INPUT_SIZE
                 )
             )
 
     @classmethod
     def _count_nesting_depth(cls, node, current_depth=0):
-        """Recursively count the maximum nesting depth of AST node
-        
-        This prevents DoS attacks via deeply nested structures.
-        """
-        if current_depth > cls.MAX_NESTING_DEPTH:
+        if current_depth > MAX_NESTING_DEPTH:
             raise DecodeError(
                 "Nesting too deep: exceeds maximum depth of {}".format(
-                    cls.MAX_NESTING_DEPTH
+                    MAX_NESTING_DEPTH
                 )
             )
 
@@ -204,16 +264,11 @@ class CollectionDecoder(IDecoder):
 
     @classmethod
     def _validate_result_size(cls, obj):
-        """Validate the total number of items in parsed structure
-        
-        This provides defense-in-depth by checking result size even after
-        successful parsing, preventing memory exhaustion from large structures.
-        """
         def count_items(obj, count=0):
-            if count > cls.MAX_TOTAL_ITEMS:
+            if count > MAX_TOTAL_ITEMS:
                 raise DecodeError(
                     "Result too large: exceeds {} items".format(
-                        cls.MAX_TOTAL_ITEMS
+                        MAX_TOTAL_ITEMS
                     )
                 )
             
@@ -241,9 +296,6 @@ class CollectionDecoder(IDecoder):
             - set-like string
             - tuple-like string
             - dict-like string
-            
-        Security: Input is validated for size and nesting depth before parsing
-        to prevent resource exhaustion attacks.
         """
         try:
             cls._validate_input_size(value)
@@ -251,12 +303,10 @@ class CollectionDecoder(IDecoder):
             cls._count_nesting_depth(tree.body)
             result = ast.literal_eval(value)
             cls._validate_result_size(result)
-            
             return result
         except (ValueError, SyntaxError, RecursionError):
             raise DecodeError
         except DecodeError:
-            # Re-raise our own validation errors
             raise
 
     @classmethod
