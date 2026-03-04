@@ -33,7 +33,7 @@ from smart_env.exceptions import DecodeError
 
 
 __all__ = ('CollectionDecoderSecurityTestCase', 'JSONDecoderSecurityTestCase',
-           'ThreadSafetyTestCase', 'ContextManagerTestCase')
+           'ThreadSafetyTestCase', 'ContextManagerTestCase', 'TypeHintsTestCase')
 
 
 class CollectionDecoderSecurityTestCase(unittest.TestCase):
@@ -495,3 +495,170 @@ class ContextManagerTestCase(unittest.TestCase):
         """Test that __enter__ returns self for 'as' syntax"""
         with ENV as env:
             self.assertIs(env, ENV)
+
+
+class TypeHintsTestCase(unittest.TestCase):
+    """Test cases for type hints validation"""
+
+    def setUp(self):
+        ENV.clear_type_hints()
+        ENV.disable_automatic_type_cast()
+        
+        if 'TEST_INT' in ENV:
+            del ENV.TEST_INT
+        if 'TEST_BOOL' in ENV:
+            del ENV.TEST_BOOL
+        if 'TEST_STR' in ENV:
+            del ENV.TEST_STR
+        if 'TEST_DICT' in ENV:
+            del ENV.TEST_DICT
+        if 'TEST_LIST' in ENV:
+            del ENV.TEST_LIST
+
+    def tearDown(self):
+        ENV.clear_type_hints()
+        ENV.disable_automatic_type_cast()
+        
+        if 'TEST_INT' in ENV:
+            del ENV.TEST_INT
+        if 'TEST_BOOL' in ENV:
+            del ENV.TEST_BOOL
+        if 'TEST_STR' in ENV:
+            del ENV.TEST_STR
+        if 'TEST_DICT' in ENV:
+            del ENV.TEST_DICT
+        if 'TEST_LIST' in ENV:
+            del ENV.TEST_LIST
+
+    def test_set_type_hints(self):
+        """Test that type hints can be set"""
+        ENV.set_type_hints(PORT=int, DEBUG=bool)
+        hints = ENV.get_type_hints()
+        
+        self.assertIn('PORT', hints)
+        self.assertIn('DEBUG', hints)
+        self.assertEqual(hints['PORT'], int)
+        self.assertEqual(hints['DEBUG'], bool)
+
+    def test_clear_type_hints(self):
+        """Test that type hints can be cleared"""
+        ENV.set_type_hints(PORT=int, DEBUG=bool)
+        self.assertTrue(len(ENV.get_type_hints()) > 0)
+        
+        ENV.clear_type_hints()
+        self.assertEqual(len(ENV.get_type_hints()), 0)
+
+    def test_type_hint_validation_int(self):
+        """Test that int type hint is validated"""
+        ENV.TEST_INT = '42'
+        ENV.set_type_hints(TEST_INT=int)
+        ENV.enable_automatic_type_cast()
+        
+        result = ENV.TEST_INT
+        self.assertEqual(result, 42)
+        self.assertIsInstance(result, int)
+
+    def test_type_hint_validation_bool(self):
+        """Test that bool type hint is validated"""
+        ENV.TEST_BOOL = 'true'
+        ENV.set_type_hints(TEST_BOOL=bool)
+        ENV.enable_automatic_type_cast()
+        
+        result = ENV.TEST_BOOL
+        self.assertEqual(result, True)
+        self.assertIsInstance(result, bool)
+
+    def test_type_hint_validation_str(self):
+        """Test that str type hint is validated"""
+        ENV.TEST_STR = 'hello'
+        ENV.set_type_hints(TEST_STR=str)
+        ENV.enable_automatic_type_cast()
+        
+        result = ENV.TEST_STR
+        self.assertEqual(result, 'hello')
+        self.assertIsInstance(result, str)
+
+    def test_type_hint_validation_dict(self):
+        """Test that dict type hint is validated"""
+        ENV.TEST_DICT = '{"key": "value"}'
+        ENV.set_type_hints(TEST_DICT=dict)
+        ENV.enable_automatic_type_cast()
+        
+        result = ENV.TEST_DICT
+        self.assertEqual(result, {"key": "value"})
+        self.assertIsInstance(result, dict)
+
+    def test_type_hint_validation_list(self):
+        """Test that list type hint is validated"""
+        ENV.TEST_LIST = '[1, 2, 3]'
+        ENV.set_type_hints(TEST_LIST=list)
+        ENV.enable_automatic_type_cast()
+        
+        result = ENV.TEST_LIST
+        self.assertEqual(result, [1, 2, 3])
+        self.assertIsInstance(result, list)
+
+    def test_type_hint_mismatch_raises_error(self):
+        """Test that type mismatch raises TypeError"""
+        ENV.TEST_INT = 'true'
+        ENV.set_type_hints(TEST_INT=int)
+        ENV.enable_automatic_type_cast()
+        
+        with self.assertRaises(TypeError) as ctx:
+            _ = ENV.TEST_INT
+        
+        self.assertIn('TEST_INT', str(ctx.exception))
+        self.assertIn('expected int', str(ctx.exception))
+        self.assertIn('got bool', str(ctx.exception))
+
+    def test_type_hint_without_type_cast_ignored(self):
+        """Test that type hints are ignored when type casting is disabled"""
+        ENV.TEST_INT = '42'
+        ENV.set_type_hints(TEST_INT=int)
+        
+        result = ENV.TEST_INT
+        self.assertEqual(result, '42')
+        self.assertIsInstance(result, str)
+
+    def test_variable_without_hint_works_normally(self):
+        """Test that variables without hints work as before"""
+        ENV.TEST_INT = '42'
+        ENV.enable_automatic_type_cast()
+        
+        result = ENV.TEST_INT
+        self.assertEqual(result, 42)
+
+    def test_multiple_type_hints(self):
+        """Test setting multiple type hints at once"""
+        ENV.TEST_INT = '42'
+        ENV.TEST_BOOL = 'true'
+        ENV.TEST_STR = 'hello'
+        
+        ENV.set_type_hints(
+            TEST_INT=int,
+            TEST_BOOL=bool,
+            TEST_STR=str
+        )
+        
+        ENV.enable_automatic_type_cast()
+        
+        self.assertIsInstance(ENV.TEST_INT, int)
+        self.assertIsInstance(ENV.TEST_BOOL, bool)
+        self.assertIsInstance(ENV.TEST_STR, str)
+
+    def test_type_hint_with_none_value(self):
+        """Test that type hints allow None values"""
+        ENV.set_type_hints(TEST_INT=int)
+        ENV.enable_automatic_type_cast()
+        
+        result = ENV.TEST_INT
+        self.assertIsNone(result)
+
+    def test_incremental_type_hints(self):
+        """Test that type hints can be added incrementally"""
+        ENV.set_type_hints(TEST_INT=int)
+        ENV.set_type_hints(TEST_BOOL=bool)
+        
+        hints = ENV.get_type_hints()
+        self.assertIn('TEST_INT', hints)
+        self.assertIn('TEST_BOOL', hints)

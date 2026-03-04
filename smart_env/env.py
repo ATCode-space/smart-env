@@ -46,12 +46,13 @@ class ClassProperty(type):
                             'disable_automatic_type_cast',
                             '_env_lock',
                             '_context_stack')
-    __mutable_fields__ = ('_auto_type_cast',)
+    __mutable_fields__ = ('_auto_type_cast', '_type_hints')
 
     __own_fields__ = __immutable_fields__ + __mutable_fields__
     
     _env_lock = threading.RLock()
     _context_stack = threading.local()
+    _type_hints = {}
 
     @staticmethod
     def __decode(value):
@@ -91,9 +92,23 @@ class ClassProperty(type):
             return cls.__dict__[item]
         
         with cls._env_lock:
+            value = os.environ.get(item, None)
+            
             if cls._auto_type_cast:
-                return cls.__decode(os.environ.get(item, None))
-            return os.environ.get(item, None)
+                decoded = cls.__decode(value)
+                
+                if item in cls._type_hints:
+                    expected_type = cls._type_hints[item]
+                    if decoded is not None and not isinstance(decoded, expected_type):
+                        raise TypeError(
+                            "Variable '{}' expected {}, got {}".format(
+                                item, expected_type.__name__, type(decoded).__name__
+                            )
+                        )
+                
+                return decoded
+            
+            return value
 
     def __delattr__(cls, item):
         """Unset environment variable"""
@@ -203,6 +218,41 @@ class ENV(with_metaclass(ClassProperty)):
     def is_auto_type_cast(cls):
         """Shows if automatic type cast is enabled"""
         return cls._auto_type_cast
+
+    @classmethod
+    def set_type_hints(cls, **hints):
+        """Register expected types for environment variables
+        
+        When type hints are set, the decoder will validate that decoded values
+        match the expected type. If the type doesn't match, TypeError is raised.
+        
+        Args:
+            **hints: Variable names mapped to expected Python types
+        
+        Example:
+            ENV.set_type_hints(
+                PORT=int,
+                DEBUG=bool,
+                ADMIN_USER=str,
+                DATABASE_CONFIG=dict,
+                ALLOWED_HOSTS=list
+            )
+            
+            ENV.enable_automatic_type_cast()
+            port = ENV.PORT  # Guaranteed to be int or raises TypeError
+            debug = ENV.DEBUG  # Guaranteed to be bool or raises TypeError
+        """
+        cls._type_hints.update(hints)
+
+    @classmethod
+    def clear_type_hints(cls):
+        """Clear all registered type hints"""
+        cls._type_hints.clear()
+
+    @classmethod
+    def get_type_hints(cls):
+        """Get currently registered type hints"""
+        return dict(cls._type_hints)
 
     def __init__(self):
         raise UnsupportedAction('Instantiating of ENV substance')
