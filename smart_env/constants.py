@@ -22,20 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import sys
-import warnings
+__all__ = ('MAX_INPUT_SIZE', 'MAX_NESTING_DEPTH', 'MAX_TOTAL_ITEMS')
 
-if sys.version_info[0] == 2:
-    warnings.warn(
-        "You are using smart-env with Python 2.7, which reached end-of-life on "
-        "January 1, 2020. Python 2.7 has known security vulnerabilities that will "
-        "never be fixed. It is strongly recommended to upgrade to Python 3.11 or later "
-        "to ensure your application remains secure. For more information, visit: "
-        "https://www.python.org/doc/sunset-python-2/",
-        DeprecationWarning,
-        stacklevel=2
-    )
 
-from .env import ENV
-
-__all__ = ('ENV',)
+MAX_INPUT_SIZE = 1024 * 1024
+MAX_NESTING_DEPTH = 20
+MAX_TOTAL_ITEMS = 10000
