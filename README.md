@@ -1,3 +1,7 @@
+# THIS REPOSITORY HAS BEEN MOVED!
+
+FIND THE LATEST SOURCE CODEBASE [HERE](https://github.com/ATCode-Solutions/smart-env).
+
 # SmartEnv - OS Environment Wrapper Library
 
 A flexible, easy-to-use library for managing environment variables in your Python script.
